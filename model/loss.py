@@ -208,10 +208,10 @@ class ContrastLoss(nn.Module):
         return loss / len(pos_x0)
 
 class Total_loss(nn.Module):
-    def __init__(self, args):
+    def __init__(self, loss_weight=(0.6,0.3,0.1)):
         super(Total_loss, self).__init__()
         self.con_loss = ContrastLoss()
-        self.weight_sl1, self.weight_msssim, self.weight_drl = args.loss_weight
+        self.weight_sl1, self.weight_msssim, self.weight_drl = loss_weight
 
     def forward(self, inp, pos, neg, out):
         smooth_loss_l1 = F.smooth_l1_loss(out, pos)

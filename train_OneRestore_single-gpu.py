@@ -122,7 +122,9 @@ if __name__ == '__main__':
     parser.add_argument("--save-model-path", type=str, default = "./ckpts/", help = 'restore model path')
 
     parser.add_argument("--epoch", type=int, default = 300, help = 'epoch number')
-    parser.add_argument("--bs", type=int, default = 4, help = 'batchsize')
+    parser.add_argument("--bs", type=int, default = 4, help = 'batchs
+    
+    ize')
     parser.add_argument("--lr", type=float, default = 1e-4, help = 'learning rate')
     parser.add_argument("--adjust-lr", type=int, default = 30, help = 'adjust learning rate')
     parser.add_argument("--num-works", type=int, default = 4, help = 'number works')

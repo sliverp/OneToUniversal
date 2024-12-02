@@ -1,0 +1,1 @@
+nohup /opt/conda/bin/python /home/liyh/OneToUniversal/train_one2universal.py > train.log &

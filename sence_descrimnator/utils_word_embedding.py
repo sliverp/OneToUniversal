@@ -7,6 +7,7 @@ def load_word_embeddings(emb_file, vocab):
     embeds = {}
     for line in open(emb_file, 'rb'):
         line = line.decode().strip().split(' ')
+        line.extend([1]*24)
         wvec = torch.FloatTensor(list(map(float, line[1:])))
         embeds[line[0]] = wvec
 
@@ -30,7 +31,8 @@ def load_word_embeddings(emb_file, vocab):
         k = k.lower()
         if '_' in k:
             toks = k.split('_')
-            emb_tmp = torch.zeros(300).float()
+            # emb_tmp = torch.zeros(300).float()
+            emb_tmp = torch.ones(324).float()
             for tok in toks:
                 if tok in custom_map_vaw:
                     tok = custom_map_vaw[tok]
@@ -40,8 +42,8 @@ def load_word_embeddings(emb_file, vocab):
         else:
             E.append(embeds[k])
 
-    embeds = torch.stack(E)
-    print ('Loaded embeddings from file %s' % emb_file, embeds.size())
+    # embeds = torch.stack(E)
+    # print ('Loaded embeddings from file %s' % emb_file, embeds.size())
 
     return embeds
 
@@ -148,7 +150,8 @@ def initialize_wordembedding_matrix(name, vocab):
 
     for wordemb in wordembs:
         if wordemb == 'glove':
-            wordemb_ = load_word_embeddings(f'./glove.6B.300d.txt', vocab)
+            wordemb_ = load_word_embeddings(f'/home/liyh/OneToUniversal/sence_descrimnator/glove.840B.300d.txt', vocab)
+            print(f"wordemb_:{wordemb_['hazy'].shape}")
         if result is None:
             result = wordemb_
         else:
