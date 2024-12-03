@@ -5,8 +5,12 @@ from torchvision import transforms
 import torchvision
 from tqdm import tqdm
 from PIL import Image
-from .dataset import MultiDegradeDataset
-from .utils_word_embedding import initialize_wordembedding_matrix
+try:
+    from .dataset import MultiDegradeDataset
+    from .utils_word_embedding import initialize_wordembedding_matrix
+except:
+    from dataset import MultiDegradeDataset
+    from utils_word_embedding import initialize_wordembedding_matrix
 
 
 
@@ -89,26 +93,36 @@ class ImageEncoder(torch.nn.Module):
         self.extractor_name = 'resnet101'
         self.mid_dim = 1024
         self.feat_dim = 2048
-        self.out_dim =  300
+        self.out_dim =  5
         self.drop_rate =  0.35
         self._setup_image_embedding()
 
     def forward(self, images):
+        # print(f"images:{images}")
         img = self.feat_extractor(images)[0]
+        # print(f"feat_extractor:{img}")
         img = self.img_embedder(img)
+        # print(f"img_embedder:{img}")
         img = self.img_avg_pool(img).squeeze(3).squeeze(2)
+        # print(f"img_avg_pool:{img}")
         img = self.img_final(img)
-        
+        # print(f"img_final:{img}")
         return img
 
     def _setup_image_embedding(self):
         # image embedding
         self.feat_extractor = self.Backbone(self.extractor_name)
-        self.feat_extractor.requires_grad_(False)
+        # self.feat_extractor.requires_grad_(False)
 
         img_emb_modules = [
-            torch.nn.Conv2d(self.feat_dim, self.mid_dim, kernel_size=1, bias=False),
+            torch.nn.Conv2d(self.feat_dim, self.mid_dim, kernel_size=5, bias=False),
             torch.nn.BatchNorm2d(self.mid_dim),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(self.mid_dim, self.mid_dim // 2, kernel_size=1, bias=False),
+            torch.nn.BatchNorm2d(self.mid_dim // 2),
+            torch.nn.ReLU(),
+            torch.nn.Conv2d(self.mid_dim // 2, self.mid_dim // 4, kernel_size=1, bias=False),
+            torch.nn.BatchNorm2d(self.mid_dim // 4),
             torch.nn.ReLU()
         ]
         if self.drop_rate > 0:
@@ -116,25 +130,34 @@ class ImageEncoder(torch.nn.Module):
         self.img_embedder = torch.nn.Sequential(*img_emb_modules)
 
         self.img_avg_pool = torch.nn.AdaptiveAvgPool2d((1, 1))
-        self.img_final = torch.nn.Linear(self.mid_dim, self.out_dim)
+        self.img_final = torch.nn.Linear(self.mid_dim // 4, self.out_dim)
 
 
 class TextImageLoss(torch.nn.Module):
     def __init__(self):
         super().__init__()
         # self.criterion = torch.nn.KLDivLoss(reduction='none')
-        self.criterion = torch.nn.MSELoss(reduction='none')
+        # self.criterion = torch.nn.MSELoss(reduction='none')
+        self.criterion = torch.nn.MSELoss()
 
-    def forward(self, imgs, texts):
+    def norm(self, x, dim):
+        
+        return x / torch.sum(x, dim=dim).reshape(x.shape[0],1)
+
+    def forward(self, imgs_code, text_mat):
         """
         img: (bs, emb_dim)
         concept: (n_class, emb_dim)
         """
-        imgs = torch.nn.functional.softmax(imgs, dim=1)
-        texts = torch.nn.functional.softmax(texts, dim=1)
-        log_imgs = torch.log(imgs)
-        loss = self.criterion(log_imgs, texts)
-        loss = loss.sum(dim=1).mean()  
+        # imgs_code = torch.nn.functional.normalize(imgs_code, dim=1)
+        # text_mat = torch.nn.functional.normalize(text_mat, dim=1)
+        # print(imgs_code)
+        imgs_code = self.norm(imgs_code, dim=1)
+        text_mat =  self.norm(text_mat, dim=1)
+        # print(imgs_code)
+        # print(text_mat)
+        # log_imgs = torch.log(imgs)
+        loss = self.criterion(imgs_code, text_mat)
         return loss
 
         
@@ -151,17 +174,16 @@ class SenceDescrimnator(torch.nn.Module):
         return  self.text_encoder(degrade_mat)
         
     def forward(self, degrade_images, degrade_mat):
-        text_code = self.text_encoder(degrade_mat)
+        # text_code = self.text_encoder(degrade_mat)
         image_code = self.image_encoder(degrade_images)
-        loss = self.loss_func(image_code, text_code)
+        loss = self.loss_func(image_code, degrade_mat)
         return loss
         
 
 if __name__ == '__main__':
     sd = SenceDescrimnator()
     train_dataset = MultiDegradeDataset(
-        '/data/lyh/train2017_degrade',
-        '/data/lyh/train2017'
+        '/home/liyh/train2017_degrade', '/home/liyh/train2017'
     )
     text = torch.tensor([[1,10,100,1,10],[1,10,100,1,10]])
     dataloader = DataLoader(train_dataset, batch_size=4)

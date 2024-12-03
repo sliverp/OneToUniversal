@@ -14,8 +14,8 @@ from pathlib import Path
 train_config = {
     "train":{
         "epoch": 200,
-        "batch_size": 48,
-        "lr": 1.5e-3,
+        "batch_size": 1,
+        "lr": 1e-5,
         "resume": "",
         "save_path":"./exp/desc/{}/",
         "save_epoch": 1,
@@ -24,7 +24,7 @@ train_config = {
         "worker": 16,
     },
      "test":{
-        "batch_size": 8,
+        "batch_size": 1,
         "save_path":"./exp/desc/{}/",
         "save_epoch": 1,
         "train_log": "./exp/desc/{}/",
@@ -167,7 +167,7 @@ def start_train(comment, is_debug):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Start Training")
-    parser.add_argument("--comment", type=str, default="frozen_res_l2_nomlp_101", help='train name')
+    parser.add_argument("--comment", type=str, default="derect_classify_nofrozen_1024-512-256-5", help='train name')
     parser.add_argument("--debug", action="store_true", help='debug mode')
     argspar = parser.parse_args()
     start_train(argspar.comment, argspar.debug)

@@ -72,8 +72,8 @@ class MultiDegradeDataset(Dataset):
     
     def _build_degrade_mat(self, degrade_dict):
         return torch.tensor(
-            [int(degrade_dict[degrade_type]) for degrade_type in self.degrade_types]
-        )
+            [float(degrade_dict[degrade_type]) for degrade_type in self.degrade_types], dtype=torch.float32
+        ) / 10
     
 
     def __len__(self):
@@ -104,7 +104,6 @@ class MultiDegradeDataset(Dataset):
 
 if __name__ == '__main__':
     train_dataset = MultiDegradeDataset(
-        '/data/data2/lyh/train2017_degrade',
-        '/data/data2/lyh/train2017'
+        '/home/liyh/train2017_degrade', '/home/liyh/train2017'
     )
     print(train_dataset[138])
